@@ -1,0 +1,60 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load data
+df = pd.read_csv('data.csv')
+
+# Data cleaning
+df.dropna(inplace=True)
+df.drop_duplicates(inplace=True)
+
+# Data exploration
+sns.set_style('darkgrid')
+sns.pairplot(df, hue='target_variable')
+plt.show()
+
+# Feature engineering
+df['new_feature'] = df['feature_1'] * df['feature_2']
+df['new_feature_2'] = df['feature_3'] ** 2
+
+# Model building
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+X = df.drop(['target_variable'], axis=1)
+y = df['target_variable']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+
+# Model evaluation
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+
+print(f'Model accuracy: {accuracy}')
+
+# Model deployment
+import pickle
+
+with open('model.pkl', 'wb') as f:
+    pickle.dump(model, f)
+
+# Flask API
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    prediction = model.predict(data)
+    return jsonify({'prediction': prediction})
+
+if __name__ == '__main__':
+    app.run(debug=True)
